@@ -22,7 +22,8 @@ public class CustomLoginScreen extends JFrame {
 
         // Painel principal com layout nulo para posicionamento personalizado
         JPanel panel = new JPanel(null);
-        panel.setBackground(new Color(25, 25, 25)); // Cor de fundo escura
+        panel.setBackground(new Color(25, 25, 25)); // Cor de fundo escura para o painel
+        
         panel.setBorder(BorderFactory.createLineBorder(new Color(45, 45, 45), 5));
 
         // Label "Faça o seu login"

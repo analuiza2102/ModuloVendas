@@ -1,80 +1,228 @@
 package com.mycompany.modulovendas;
 
+import javax.swing.text.JTextComponent;
 import javax.swing.*;
 import java.awt.*;
+import java.text.ParseException;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.MaskFormatter;
 
 public class MovimentosVenda extends JFrame {
-    private JTextField codigoVendaTextField, codigoClienteTextField, codigoProdutoTextField;
-    private JFormattedTextField dataVendaFormattedField, valorTotalTextField;
-    private JButton salvarButton, cancelarButton;
+    // Componentes da tela de movimentos de venda
+    private JTextField codigoVendaTextField, valorTextField, descontoTextField, totalTextField;
+    private JComboBox<String> codigoUsuarioComboBox, codigoClienteComboBox;
+    private JFormattedTextField dataVendaFormattedField;
+    private JTextArea observacoesTextArea;
+    private JButton salvarButton, cancelarButton, adicionarProdutoButton, removerProdutoButton;
+    private JTable produtosTable;
+    private DefaultTableModel tableModel;
 
     public MovimentosVenda() {
+        // Configurações básicas da janela
         setTitle("Movimento de Venda");
-        setSize(600, 300);
+        setSize(1100, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null); // Centraliza a janela na tela
+        setLocationRelativeTo(null); // Centralizar a janela na tela
 
+        // Inicializando os componentes
+        Dimension fieldSize = new Dimension(300, 30); // Tamanho dos campos de texto
+
+        Color backgroundColor = new Color(45, 45, 45); // Cor de fundo padrão escura
+        Color fieldBackgroundColor = new Color(60, 63, 65); // Cor de fundo dos campos de entrada
+        Color fontColor = Color.WHITE; // Cor da fonte branca
+        Font font = new Font("SansSerif", Font.PLAIN, 14); // Fonte padrão
+
+        // Campos de texto
         codigoVendaTextField = new JTextField();
-        codigoClienteTextField = new JTextField();
-        codigoProdutoTextField = new JTextField();
+        configurarCampoTexto(codigoVendaTextField, fieldSize, fieldBackgroundColor, fontColor, font);
+
+        valorTextField = new JTextField();
+        configurarCampoTexto(valorTextField, fieldSize, fieldBackgroundColor, fontColor, font);
+
+        descontoTextField = new JTextField();
+        configurarCampoTexto(descontoTextField, fieldSize, fieldBackgroundColor, fontColor, font);
+
+        totalTextField = new JTextField();
+        configurarCampoTexto(totalTextField, fieldSize, fieldBackgroundColor, fontColor, font);
+
+        // Comboboxes
+        codigoUsuarioComboBox = new JComboBox<>(new String[]{"Usuário 1", "Usuário 2", "Usuário 3"});
+        configurarComboBox(codigoUsuarioComboBox, fieldSize, fieldBackgroundColor, fontColor, font);
+
+        codigoClienteComboBox = new JComboBox<>(new String[]{"Cliente 1", "Cliente 2", "Cliente 3"});
+        configurarComboBox(codigoClienteComboBox, fieldSize, fieldBackgroundColor, fontColor, font);
+
+        // Campo de data
         try {
             MaskFormatter dataFormatter = new MaskFormatter("##/##/####");
             dataVendaFormattedField = new JFormattedTextField(dataFormatter);
-        } catch (Exception e) {
+            configurarCampoTexto(dataVendaFormattedField, fieldSize, fieldBackgroundColor, fontColor, font);
+        } catch (ParseException e) {
             e.printStackTrace();
         }
-        valorTotalTextField = new JFormattedTextField();
 
-        salvarButton = new JButton("Salvar");
-        cancelarButton = new JButton("Cancelar");
+        // Área de texto para observações
+        observacoesTextArea = new JTextArea(5, 20);
+        observacoesTextArea.setLineWrap(true);
+        observacoesTextArea.setWrapStyleWord(true);
+        observacoesTextArea.setBackground(fieldBackgroundColor);
+        observacoesTextArea.setForeground(fontColor);
+        observacoesTextArea.setFont(font);
+        JScrollPane observacoesScrollPane = new JScrollPane(observacoesTextArea);
+        observacoesScrollPane.setPreferredSize(new Dimension(300, 100));
+        observacoesScrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
+        // Configurando a tabela de produtos
+        String[] colunas = {"Código Produto", "Nome Produto", "Quantidade", "Preço Unitário", "Desconto", "Total"};
+        tableModel = new DefaultTableModel(colunas, 0);
+        produtosTable = new JTable(tableModel);
+        configurarTabela(produtosTable, font, fieldBackgroundColor, fontColor);
+        JScrollPane tabelaScrollPane = new JScrollPane(produtosTable);
+        tabelaScrollPane.setPreferredSize(new Dimension(1000, 300));
+        tabelaScrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+        // Botões
+        adicionarProdutoButton = criarBotao("Adicionar Produto", new Color(46, 139, 87), fontColor, font);
+        removerProdutoButton = criarBotao("Remover Produto", new Color(178, 34, 34), fontColor, font);
+        salvarButton = criarBotao("Salvar", new Color(70, 130, 180), fontColor, font);
+        cancelarButton = criarBotao("Cancelar", new Color(128, 128, 128), fontColor, font);
+
+        // Ações dos botões
+        adicionarProdutoButton.addActionListener(e -> adicionarProduto());
+        removerProdutoButton.addActionListener(e -> removerProduto());
+        cancelarButton.addActionListener(e -> dispose());
+
+        // Configurando o layout com GridBagLayout
         JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
 
-        // Linha 1
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Código da Venda:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0;
-        panel.add(codigoVendaTextField, gbc);
+        // Linha 1 - Código Venda e Data Venda
+        adicionarComponente(panel, criarLabel("Código Venda:", fontColor, font), gbc, 0, 0);
+        adicionarComponente(panel, codigoVendaTextField, gbc, 1, 0);
+        adicionarComponente(panel, criarLabel("Data da Venda:", fontColor, font), gbc, 2, 0);
+        adicionarComponente(panel, dataVendaFormattedField, gbc, 3, 0);
 
-        // Linha 2
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Código do Cliente:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1;
-        panel.add(codigoClienteTextField, gbc);
+        // Linha 2 - Código Usuário e Código Cliente
+        adicionarComponente(panel, criarLabel("Código Usuário:", fontColor, font), gbc, 0, 1);
+        adicionarComponente(panel, codigoUsuarioComboBox, gbc, 1, 1);
+        adicionarComponente(panel, criarLabel("Código Cliente:", fontColor, font), gbc, 2, 1);
+        adicionarComponente(panel, codigoClienteComboBox, gbc, 3, 1);
 
-        // Linha 3
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(new JLabel("Código do Produto:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2;
-        panel.add(codigoProdutoTextField, gbc);
+        // Linha 3 - Valor, Desconto e Total
+        adicionarComponente(panel, criarLabel("Valor:", fontColor, font), gbc, 0, 2);
+        adicionarComponente(panel, valorTextField, gbc, 1, 2);
+        adicionarComponente(panel, criarLabel("Desconto:", fontColor, font), gbc, 2, 2);
+        adicionarComponente(panel, descontoTextField, gbc, 3, 2);
+        adicionarComponente(panel, criarLabel("Total:", fontColor, font), gbc, 0, 3);
+        adicionarComponente(panel, totalTextField, gbc, 1, 3);
 
-        // Linha 4
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(new JLabel("Data da Venda:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 3;
-        panel.add(dataVendaFormattedField, gbc);
+        // Linha 4 - Observações
+        adicionarComponente(panel, criarLabel("Observações:", fontColor, font), gbc, 0, 4);
+        gbc.gridwidth = 3;
+        adicionarComponente(panel, observacoesScrollPane, gbc, 1, 4);
+        gbc.gridwidth = 1;
 
-        // Linha 5
-        gbc.gridx = 0; gbc.gridy = 4;
-        panel.add(new JLabel("Valor Total:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 4;
-        panel.add(valorTotalTextField, gbc);
+        // Linha 5 - Tabela de Produtos
+        gbc.gridwidth = 4;
+        adicionarComponente(panel, tabelaScrollPane, gbc, 0, 5);
+        gbc.gridwidth = 1;
 
-        // Linha 6 - Botões
-        gbc.gridx = 0; gbc.gridy = 5;
-        panel.add(salvarButton, gbc);
-        gbc.gridx = 1; gbc.gridy = 5;
-        panel.add(cancelarButton, gbc);
+        // Linha 6 - Botões de adicionar e remover produto
+        adicionarComponente(panel, adicionarProdutoButton, gbc, 1, 6);
+        adicionarComponente(panel, removerProdutoButton, gbc, 2, 6);
 
+        // Linha 7 - Botões Salvar e Cancelar
+        adicionarComponente(panel, salvarButton, gbc, 1, 7);
+        adicionarComponente(panel, cancelarButton, gbc, 2, 7);
+
+        // Adicionando o painel ao frame
         add(panel);
+
+        // Tornando a janela visível
         setVisible(true);
     }
 
+    private void configurarCampoTexto(JTextComponent campo, Dimension size, Color bgColor, Color fgColor, Font font) {
+        campo.setPreferredSize(size);
+        campo.setBackground(bgColor);
+        campo.setForeground(fgColor);
+        campo.setFont(font);
+        campo.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    }
+
+    private void configurarComboBox(JComboBox<String> comboBox, Dimension size, Color bgColor, Color fgColor, Font font) {
+        comboBox.setPreferredSize(size);
+        comboBox.setBackground(bgColor);
+        comboBox.setForeground(fgColor);
+        comboBox.setFont(font);
+        comboBox.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    }
+
+    private JLabel criarLabel(String texto, Color fgColor, Font font) {
+        JLabel label = new JLabel(texto);
+        label.setForeground(fgColor);
+        label.setFont(font);
+        return label;
+    }
+
+    private JButton criarBotao(String texto, Color bgColor, Color fgColor, Font font) {
+        JButton botao = new JButton(texto);
+        botao.setBackground(bgColor);
+        botao.setForeground(fgColor);
+        botao.setFont(font);
+        botao.setFocusPainted(false);
+        botao.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        return botao;
+    }
+
+    private void adicionarComponente(JPanel panel, JComponent componente, GridBagConstraints gbc, int x, int y) {
+        gbc.gridx = x;
+        gbc.gridy = y;
+        panel.add(componente, gbc);
+    }
+
+    private void configurarTabela(JTable tabela, Font font, Color bgColor, Color fgColor) {
+        tabela.setFont(font);
+        tabela.setRowHeight(25);
+        tabela.setBackground(bgColor);
+        tabela.setForeground(fgColor);
+        tabela.setSelectionBackground(new Color(70, 70, 70));
+        tabela.setSelectionForeground(fgColor);
+
+        // Configurando o header da tabela
+        tabela.getTableHeader().setReorderingAllowed(false);
+        tabela.getTableHeader().setBackground(new Color(30, 30, 30));
+        tabela.getTableHeader().setForeground(fgColor);
+        tabela.getTableHeader().setFont(font);
+
+        // Centralizando o texto nas células
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < tabela.getColumnCount(); i++) {
+            tabela.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
+
+    private void adicionarProduto() {
+        // Exemplo simples de adicionar um produto com dados vazios
+        tableModel.addRow(new Object[]{"", "", "", "", "", ""});
+    }
+
+    private void removerProduto() {
+        int selectedRow = produtosTable.getSelectedRow();
+        if (selectedRow != -1) {
+            tableModel.removeRow(selectedRow);
+        } else {
+            JOptionPane.showMessageDialog(this, "Selecione um produto para remover.", "Atenção", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MovimentosVenda());
+        // Executa a tela de movimentos de venda
+        SwingUtilities.invokeLater(MovimentosVenda::new);
     }
 }
